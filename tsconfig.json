@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "target": "esnext",
+    "jsx": "react-jsx",
+    "moduleResolution": "Bundler",
+    "module": "ESNext",
+    "types": ["vitest/importMeta"],
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  }
+}

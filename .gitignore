@@ -1,0 +1,4 @@
+public/*.wasm
+public/*.min.js
+public/*.onnx
+node_modules
