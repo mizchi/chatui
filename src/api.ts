@@ -30,7 +30,7 @@ export async function runChatAnthropicAI(options: {
     result += text;
     options.onUpdate(result, text);
   });
-  // const mes = await stream.finalMessage();
+  const mes = await stream.finalMessage();
   return result;
 }
 

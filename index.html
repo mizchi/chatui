@@ -7,35 +7,35 @@
   <title>Document</title>
   <script type="module" src="src/index.tsx"></script>
   <script>
-    window.addEventListener('keydown', (ev) => {
-      if (ev.ctrlKey && ev.key === 'Enter') _play(document.getElementById('textarea').value);
-    });
-    window._play = async (text) => {
-      text ||= document.getElementById('textarea').value;
-      const encodedText = encodeURIComponent(text);
-      const query = await fetch(`http://localhost:50021/audio_query?speaker=1&text=${encodedText}`, {
-        method: 'POST',
-      }).then(res => res.json());
-      const res = await fetch('http://localhost:50021/synthesis?speaker=1', {
-        method: 'POST',
-        body: JSON.stringify(query),
-        mode: "cors",
-        cache: "no-cache",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "audio/wav",
-        },
-      });
-      try {
-        const url = window.URL.createObjectURL(await res.blob())
-        window.audio = new Audio();
-        window.type = 'audio/wav';
-        window.audio.src = url;
-        await window.audio.play();
-      } catch (error) {
-        console.log(error);
-      }
-    }
+    // window.addEventListener('keydown', (ev) => {
+    //   if (ev.ctrlKey && ev.key === 'Enter') _play(document.getElementById('textarea').value);
+    // });
+    // window._play = async (text) => {
+    //   text ||= document.getElementById('textarea').value;
+    //   const encodedText = encodeURIComponent(text);
+    //   const query = await fetch(`http://localhost:50021/audio_query?speaker=1&text=${encodedText}`, {
+    //     method: 'POST',
+    //   }).then(res => res.json());
+    //   const res = await fetch('http://localhost:50021/synthesis?speaker=1', {
+    //     method: 'POST',
+    //     body: JSON.stringify(query),
+    //     mode: "cors",
+    //     cache: "no-cache",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //       "Accept": "audio/wav",
+    //     },
+    //   });
+    //   try {
+    //     const url = window.URL.createObjectURL(await res.blob())
+    //     window.audio = new Audio();
+    //     window.type = 'audio/wav';
+    //     window.audio.src = url;
+    //     await window.audio.play();
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // }
   </script>
   <div id="root"></div>
 </head>
