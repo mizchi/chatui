@@ -1,50 +1,84 @@
+import * as monaco from 'monaco-editor';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+
 
 // 入力エリアコンポーネント
 export function Editor({ initialValue, onChange, disabled }: { disabled: boolean, initialValue: string, onChange: (text: string) => void }) {
-  const [inputValue, setInputValue] = useState(initialValue);
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const [isDisabled, setIsDisabled] = useState(true);
+  // const [inputValue, setInputValue] = useState(initialValue);
+  const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (!ref.current) return;
-    setIsDisabled(false);
+    // setIsDisabled(false);
+
+    const model = monaco.editor.createModel(initialValue, 'markdown');
+    // https://farzadyz.com/blog/single-line-monaco-editor
+    const editor = monaco.editor.create(ref.current, {
+      value: initialValue,
+      model: model,
+      scrollBeyondLastColumn: 0,
+      language: 'markdown',
+      theme: 'vs-dark',
+      automaticLayout: true,
+      lineNumbers: 'off',
+      fontSize: 18,
+      tabSize: 2,
+      glyphMargin: false,
+      folding: false,
+      lineDecorationsWidth: 8,
+      lineNumbersMinChars: 0,
+      renderLineHighlight: "none",
+      wordWrap: "off",
+      padding: {
+        top: 8,
+        bottom: 3,
+      },
+      minimap: {
+        enabled: false
+      },
+      overviewRulerLanes: 0,
+      overviewRulerBorder: false,
+      readOnly: true,
+      insertSpaces: true,
+    });
+    model.updateOptions({ indentSize: 2 });
+    setEditor(editor);
+    editor.layout();
+    editor.focus();
+    model.setValue(initialValue);
     setTimeout(() => {
-      ref.current!.focus()
-      ref.current!.setSelectionRange(initialValue.length, initialValue.length);
+      editor.updateOptions({
+        readOnly: false
+      })
+      editor.focus();
+      editor.setPosition({
+        column: model.getLineLength(model.getLineCount()) + 1,
+        lineNumber: model.getLineCount(),
+      });
     }, 0);
   }, [ref]);
 
-  const onChangeTextarea = useCallback((ev: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = (ev.target as any).value;
-    console.log('value', value);
-    setInputValue(value);
-    onChange(value);
-  }, [onChange, setInputValue]);
-
   useEffect(() => {
-    const handler = (ev: KeyboardEvent) => {
-      if (ev.metaKey && ev.key === 'Enter') {
-        setInputValue('');
-      }
-    }
-    window.addEventListener('keydown', handler);
-    return () => {
-      window.removeEventListener('keydown', handler);
-    }
-  }, [setInputValue]);
+    if (isInitialized) return;
+    if (!editor) return;
+    console.log('editor', editor);
+    editor.onDidChangeModelContent((changed) => {
+      console.log('editor.getValue()', changed, editor.getValue());
+      onChange(editor.getValue());
+    });
+    setIsInitialized(true);
+
+    // return () => {
+    //   console.log('dispose');
+    //   handler.dispose();
+    // }
+  }, [editor, isInitialized, onChange]);
 
   return (
     <div className="p-1 bg-gray-800 flex h-full w-full flex-col">
-      <textarea
-        value={inputValue}
-        onChange={onChangeTextarea}
-        autoComplete="off"
-        disabled={isDisabled || disabled}
-        ref={ref}
-        className={`flex-1 p-2 bg-gray-700 text-white resize-none outline-none border-none rounded ${disabled ? 'cursor-not-allowed' : 'cursor-text'}`}
-        placeholder={disabled ? 'Locked...' : "Type your message here..."}
-      />
+      <div ref={ref} className="h-full w-full"></div>
     </div>
   );
 }

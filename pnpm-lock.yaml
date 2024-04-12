@@ -34,6 +34,9 @@ devDependencies:
   dexie-react-hooks:
     specifier: ^1.1.7
     version: 1.1.7(@types/react@18.2.75)(dexie@4.0.4)(react@18.2.0)
+  monaco-editor:
+    specifier: ^0.47.0
+    version: 0.47.0
   openai:
     specifier: ^4.33.0
     version: 4.33.0
@@ -55,6 +58,9 @@ devDependencies:
   vite:
     specifier: ^5.2.8
     version: 5.2.8
+  vite-plugin-monaco-editor:
+    specifier: ^1.1.0
+    version: 1.1.0(monaco-editor@0.47.0)
   vite-plugin-static-copy:
     specifier: ^1.0.2
     version: 1.0.2(vite@5.2.8)
@@ -1302,6 +1308,10 @@ packages:
       ufo: 1.5.3
     dev: true
 
+  /monaco-editor@0.47.0:
+    resolution: {integrity: sha512-VabVvHvQ9QmMwXu4du008ZDuyLnHs9j7ThVFsiJoXSOQk18+LF89N4ADzPbFenm0W4V2bGHnFBztIRQTgBfxzw==}
+    dev: true
+
   /ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
     dev: true
@@ -1888,6 +1898,14 @@ packages:
       - sugarss
       - supports-color
       - terser
+    dev: true
+
+  /vite-plugin-monaco-editor@1.1.0(monaco-editor@0.47.0):
+    resolution: {integrity: sha512-IvtUqZotrRoVqwT0PBBDIZPNraya3BxN/bfcNfnxZ5rkJiGcNtO5eAOWWSgT7zullIAEqQwxMU83yL9J5k7gww==}
+    peerDependencies:
+      monaco-editor: '>=0.33.0'
+    dependencies:
+      monaco-editor: 0.47.0
     dev: true
 
   /vite-plugin-static-copy@1.0.2(vite@5.2.8):

@@ -1,9 +1,11 @@
 // import fs from "fs";
-// @ts-ignore
-// import { viteStaticCopy } from 'vite-plugin-static-copy';
+import monacoEditorPlugin from 'vite-plugin-monaco-editor';
 import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [
+    monacoEditorPlugin({
+
+    }),
     {
       name: "isolation",
       configureServer(server) {

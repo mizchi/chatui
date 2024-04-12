@@ -294,8 +294,6 @@ function useActions(app: AppState, setApp: SetAppState) {
 function useKeyEvents(app: AppState, setAppState: SetAppState, actions: ReturnType<typeof useActions>) {
   useEffect(() => {
     const onKeyDown = async (e: KeyboardEvent) => {
-      console.log(e.key, e.metaKey);
-      // editor => chat
       if (e.key === 'Escape' && app.isEditorOpen) {
         setAppState(old => {
           return {
