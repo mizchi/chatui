@@ -9,7 +9,7 @@ export function ModelSelector(props: { model: string, onSelectModel: (model: str
         props.onSelectModel(e.target.value);
       }} className="bg-white border border-gray-300 rounded-md py-2 px-4">
         {MODELS.map((model) => (
-          <option key={model.name} value={model.name}>{model.name}</option>
+          <option key={model.id} value={model.id}>{model.displayName}</option>
         ))}
       </select>
     </div>

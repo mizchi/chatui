@@ -36,5 +36,14 @@ export default defineConfig({
   test: {
     includeSource: ['src/**/*.{ts,tsx}'],
   },
+  server: {
+    proxy: {
+      '/anthropic-api/': {
+        target: 'https://api.anthropic.com/',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/anthropic-api/, ''),
+      },
+    },
+  },
 
 });

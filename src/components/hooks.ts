@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { runChatForDebug, runOpenAI, transcript } from "../api";
+import { runAnthropicAI, runChatForDebug, runOpenAI, transcript } from "../api";
 import { defaultAppState, loadAppState, saveAppState } from "../storage";
 import { createAsyncQueue, createTextSplitter } from "../utils";
-import { SPEAKERS, SYSTEMS } from "../data";
+import { MODELS, SPEAKERS, SYSTEMS } from "../data";
 import { utils } from "@ricky0123/vad-web";
 import { Dialog, createNewDialog, db, updateMessages } from "../db";
 import { playClick as playClickSound, voicevox } from "../audio";
@@ -34,12 +34,12 @@ export function useApp() {
   useEffect(() => {
     (async () => {
       const appState = await loadAppState();
-      if (!appState.openaiApiKey) {
-        appState.openaiApiKey = prompt("Enter OpenAI API Key");
-      }
-      if (!appState.anthropicApiKey) {
-        appState.anthropicApiKey = prompt("Enter Anthropic API Key");
-      }
+      // if (!appState.openaiApiKey) {
+      //   appState.openaiApiKey = prompt("Enter OpenAI API Key");
+      // }
+      // if (!appState.anthropicApiKey) {
+      //   appState.anthropicApiKey = prompt("Enter Anthropic API Key");
+      // }
       setAppState(appState);
     })();
   }, []);
@@ -48,7 +48,7 @@ export function useApp() {
     const savingApp: AppState = {
       ...app,
       messages: app.messages.filter(m => {
-        return m.content.trim().length > 0;
+        return m.content?.trim().length > 0;
       })
     }
     saveAppState(savingApp).then(() => {
@@ -72,26 +72,13 @@ function useActions(app: AppState, setApp: SetAppState, isEditorOpen: boolean, s
   }, [app])
 
   const addMessage = useCallback(async (input: string) => {
-    // console.log('[addMessage]', app.isEditorOpen);
-    setApp(old => ({
-      ...old,
-      isEditorOpen: false,
-      // locked: true,
-    }));
-    // console.log('[addMessage:post]', app);
-
-    let currentMessages: ChatMessage[] = [
+    const sendingMessages = [
       ...app.messages,
       {
-
         role: "user",
         content: input,
       },
     ];
-    setApp({
-      ...app,
-      messages: currentMessages,
-    });
     const processVoicevox = async (text: string) => {
       const speaker = SPEAKERS.find(s => s.id === app.speaker);
       if (speaker?.type === 'voicevox') {
@@ -99,27 +86,31 @@ function useActions(app: AppState, setApp: SetAppState, isEditorOpen: boolean, s
       }
     };
     const asyncQueue = createAsyncQueue<string>(processVoicevox);
-    currentMessages = [
-      ...currentMessages,
-      {
-        role: "assistant",
-        content: '',
-      }
-    ]
-    setApp({
-      ...app,
-      messages: currentMessages
-    });
 
     const splitter = /[。|?|？|!|！]/
     const textSplitter = createTextSplitter('', splitter);
     const systemContent = SYSTEMS.find(s => s.id === app.system)?.content;
 
     let answer = '';
+    let currentMessages: ChatMessage[] = [
+      ...app.messages,
+      {
+        role: "user",
+        content: input,
+      },
+      {
+        role: "assistant",
+        content: '',
+      }
+    ];
+    setApp({
+      ...app,
+      messages: currentMessages
+    });
     if (DEBUG_UI) {
       answer = await runChatForDebug({
         system: systemContent!,
-        messages: currentMessages.map(t => ({ role: t.role, content: t.content })),
+        messages: sendingMessages,
         onUpdate: (text, delta) => {
           const lines = textSplitter.update(delta);
           for (const line of lines) {
@@ -140,36 +131,75 @@ function useActions(app: AppState, setApp: SetAppState, isEditorOpen: boolean, s
         }
       });
     } else {
-      answer = await runOpenAI({
-        apiKey: app.openaiApiKey!,
-        model: app.model!,
-        messages: [
-          ...currentMessages.map(t => ({ role: t.role, content: t.content })),
-          {
-            role: "user",
-            content: input,
-          },
-        ],
-        system: systemContent!,
-        onUpdate: (text, delta) => {
-          const lines = textSplitter.update(delta);
-          for (const line of lines) {
-            asyncQueue.enqueue(line);
-          }
-          currentMessages = [
-            ...currentMessages.slice(0, -1),
+      const model = app.model;
+      const found = MODELS.find(m => m.id === model);
+      if (!found) {
+        throw new Error(`Model not found: ${model}`);
+        return;
+      }
+      if (found.service === 'openai') {
+        answer = await runOpenAI({
+          apiKey: app.openaiApiKey!,
+          model: found.id,
+          messages: [
+            ...app.messages,
             {
-              role: "assistant",
-              content: text,
+              role: "user",
+              content: input,
             },
-          ];
-          setApp(old => ({
-            ...old,
-            generating: true,
-            messages: currentMessages.slice(),
-          }));
-        }
-      });
+          ],
+          system: systemContent!,
+          onUpdate: (text, delta) => {
+            const lines = textSplitter.update(delta);
+            for (const line of lines) {
+              asyncQueue.enqueue(line);
+            }
+            currentMessages = [
+              ...currentMessages.slice(0, -1),
+              {
+                role: "assistant",
+                content: text,
+              },
+            ];
+            setApp(old => ({
+              ...old,
+              generating: true,
+              messages: currentMessages.slice(),
+            }));
+          }
+        });
+      } else if (found.service === 'anthropic') {
+        answer = await runAnthropicAI({
+          apiKey: app.anthropicApiKey!,
+          model: 'claude-3-opus-20240229',
+          messages: [
+            ...app.messages,
+            {
+              role: "user",
+              content: input,
+            },
+          ],
+          system: systemContent!,
+          onUpdate: (text, delta) => {
+            const lines = textSplitter.update(delta);
+            for (const line of lines) {
+              asyncQueue.enqueue(line);
+            }
+            currentMessages = [
+              ...currentMessages.slice(0, -1),
+              {
+                role: "assistant",
+                content: text,
+              },
+            ];
+            setApp(old => ({
+              ...old,
+              generating: true,
+              messages: currentMessages.slice(),
+            }));
+          }
+        });
+      }
     }
     const remainingText = textSplitter.drain();
     for (const line of remainingText) {
@@ -242,8 +272,12 @@ function useActions(app: AppState, setApp: SetAppState, isEditorOpen: boolean, s
       locked: true,
     });
     const wavBuffer = utils.encodeWAV(audio);
-    const result = await transcript(wavBuffer, { apiKey: app.openaiApiKey! });
-    addMessage(result.text);
+    try {
+      const result = await transcript(wavBuffer, { apiKey: app.openaiApiKey! });
+      addMessage(result.text);
+    } catch (err) {
+      console.error(err);
+    }
   }, [app, addMessage]);
 
   const onChangeListening = (listening: boolean) => {

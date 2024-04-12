@@ -31,3 +31,25 @@ export interface Dialog {
   summary?: string;
 }
 
+
+export type VoicevoxSpeaker = {
+  id: string,
+  type: 'voicevox';
+  displayName: string;
+  speakerId: number;
+  speedScale: number;
+  pitchScale: number;
+}
+type VoiceOff = {
+  type: 'off';
+  displayName: string;
+  id: string;
+};
+
+type TextToSpeech = {
+  type: 'text-to-speech';
+  displayName: string;
+  id: string;
+}
+
+export type Speaker = VoicevoxSpeaker | VoiceOff | TextToSpeech;

@@ -2,20 +2,22 @@ import AnthropicAI from "@anthropic-ai/sdk";
 import { OpenAI } from "openai";
 
 // TODO: Proxy
-export async function runChatAnthropicAI(options: {
+export async function runAnthropicAI(options: {
   system: string,
   messages: AnthropicAI.Messages.MessageParam[],
   model: string,
   apiKey: string,
   onUpdate: (text: string, delta: string) => void,
 }) {
+
+  const baseURL = `${location.protocol}//${location.host}/anthropic-api/`
   const client = new AnthropicAI({
     apiKey: options.apiKey,
-    // baseURL: 'https://api.anthropic.com',
-    baseURL: '/anthropic-api',
+    baseURL: baseURL,
   });
 
   let result = '';
+  // debugger;
   const stream = client.messages.stream({
     system: options.system,
     messages: options.messages as AnthropicAI.Messages.MessageParam[],
@@ -111,6 +113,9 @@ export async function transcript(wavBuffer: ArrayBuffer, options: { apiKey: stri
     method: "POST",
     body: transcriptionFormData,
   });
+  if (res.status === 429) {
+    throw new Error('Rate Limit Exceeded');
+  }
   const json = await res.json();
   // console.log(json);
   return json;

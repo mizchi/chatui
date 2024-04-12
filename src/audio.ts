@@ -28,15 +28,21 @@ function stripCodeBlock(text: string) {
 export async function voicevox(text: string, speaker: VoicevoxSpeaker) {
   const newText = stripCodeBlock(text);
   const encodedText = encodeURIComponent(newText);
-  const query = await fetch(`http://localhost:50021/audio_query?speaker=1&text=${encodedText}`, {
+  const queryRes = await fetch(`http://localhost:50021/audio_query?speaker=3&text=${encodedText}`, {
     method: 'POST',
-  }).then(res => res.json());
+  });
+  if (!queryRes.ok) {
+    console.error(queryRes);
+    return;
+  }
+  const query = await queryRes.json();
+
   // debugger;
   // speedup
   query.speedScale = speaker.speedScale;
   query.pitchScale = speaker.pitchScale;
 
-  const res = await fetch('http://localhost:50021/synthesis?speaker=1', {
+  const res = await fetch(`http://localhost:50021/synthesis?speaker=${speaker.speakerId}`, {
     method: 'POST',
     body: JSON.stringify(query),
     mode: "cors",

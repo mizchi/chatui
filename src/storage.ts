@@ -11,9 +11,8 @@ export const defaultAppState: AppState = {
   loading: false,
   generating: false,
   model: 'gpt-4-turbo',
-  system: 'zundamon',
-  speaker: 'zundamon',
-  // isEditorOpen: false,
+  system: 'chatter',
+  speaker: 'off',
   draft: '',
 }
 

@@ -2,7 +2,6 @@ import * as monaco from 'monaco-editor';
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { bindMonacoActions, initMonaco } from '../utils/monaco';
 
-// 入力エリアコンポーネント
 export function Editor({ initialValue, onChange, openAiApiKey, onSubmit }: {
   initialValue: string,
   openAiApiKey?: string | null,
@@ -44,17 +43,19 @@ export function Editor({ initialValue, onChange, openAiApiKey, onSubmit }: {
   useEffect(() => {
     if (isInitialized) return;
     if (!editor) return;
-    // consolfn e.log('editor', editor);
-    // const dispose = bindMonacoKey(editor, onChange);
     editor.onDidChangeModelContent((changed) => {
       onChange(editor.getValue());
     });
+
     setIsInitialized(true);
   }, [editor, isInitialized, onChange]);
 
   return (
-    <div className="p-1 bg-gray-800 flex h-full w-full flex-col">
-      <div ref={ref} className="h-full w-full mb-5"></div>
+    <div className="p-3 flex h-full w-full flex-col items-center" style={{
+      background: '#1E1E1E'
+    }}>
+      {/* <div ref={ref} className="h-full w-full mb-5"></div> */}
+      <div ref={ref} className="h-full w-full mb-5 max-w-2xl mx-auto rounded"></div>
     </div>
   );
 }

@@ -39,10 +39,9 @@ const rawToHtml = unified()
               // padding: 3,
             }
           }} />
-          <div style={{ position: 'absolute', right: 0, top: 0 }}>
+          <div style={{ position: 'absolute', right: 2, top: 2 }}>
             <button onClick={() => {
               if (ref.current === null) return;
-              console.log('props.children', ref.current.textContent);
               navigator.clipboard.writeText(ref.current.textContent || '');
               setCopied(true);
             }}>[{copied ? 'Copied' : "Copy"}]</button>
