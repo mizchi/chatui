@@ -60,7 +60,7 @@ type System = {
 export const SYSTEMS: System[] = [
   {
     id: 'zundamon',
-    displayName: 'Zundamon',
+    displayName: 'ずんだもん人格',
     content: ZUNDA_PROMPT,
   },
   {
@@ -93,7 +93,7 @@ export type Speaker = VoicevoxSpeaker | VoiceOff | TextToSpeech;
 
 export const SPEAKERS: Speaker[] = [
   {
-    displayName: 'Off',
+    displayName: 'No Speaker',
     id: 'off',
     type: 'off',
   },

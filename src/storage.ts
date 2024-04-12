@@ -13,7 +13,7 @@ export const defaultAppState: AppState = {
   model: 'gpt-4-turbo',
   system: 'zundamon',
   speaker: 'zundamon',
-  isEditorOpen: false,
+  // isEditorOpen: false,
   draft: '',
 }
 
@@ -22,7 +22,7 @@ const alwaysResetValues: Partial<AppState> = {
   listening: false,
   loading: false,
   generating: false,
-  isEditorOpen: false,
+  // isEditorOpen: false,
 }
 
 export async function loadAppState(): Promise<AppState> {

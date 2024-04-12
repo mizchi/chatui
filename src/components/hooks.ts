@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { runOpenAI, transcript } from "../api";
+import { runChatForDebug, runOpenAI, transcript } from "../api";
 import { defaultAppState, loadAppState, saveAppState } from "../storage";
 import { createAsyncQueue, createTextSplitter } from "../utils";
 import { SPEAKERS, SYSTEMS } from "../data";
@@ -9,6 +9,8 @@ import { playClick as playClickSound, voicevox } from "../audio";
 import { AppState, ChatMessage } from "../types";
 
 type SetAppState = React.Dispatch<React.SetStateAction<AppState>>;
+
+const DEBUG_UI = location.search === '?debug';
 
 function useThrottle(callback: () => void, delay: number, keys: any[] = []) {
   const lastRan = useRef(Date.now());
@@ -27,6 +29,7 @@ function useThrottle(callback: () => void, delay: number, keys: any[] = []) {
 
 export function useApp() {
   const [app, setAppState] = useState<AppState>(defaultAppState);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -42,25 +45,24 @@ export function useApp() {
   }, []);
 
   useThrottle(() => {
-    saveAppState(app).then(() => {
+    const savingApp: AppState = {
+      ...app,
+      messages: app.messages.filter(m => {
+        return m.content.trim().length > 0;
+      })
+    }
+    saveAppState(savingApp).then(() => {
       // console.log("Saved", app)
     });
-  }, 500, [app, app.messages, app]);
-  const actions = useActions(app, setAppState);
+  }, 1000, [app, app.messages, app]);
+  const actions = useActions(app, setAppState, isEditorOpen, setIsEditorOpen);
 
-  useKeyEvents(app, setAppState, actions);
+  useKeyEvents(app, actions, isEditorOpen, setIsEditorOpen);
 
-  return { app, actions };
+  return { app, actions, isEditorOpen };
 }
 
-function useActions(app: AppState, setApp: SetAppState) {
-  const setIsEditorOpen = useCallback((isEditorOpen: boolean) => {
-    setApp(old => ({
-      ...old,
-      isEditorOpen,
-    }));
-  }, []);
-
+function useActions(app: AppState, setApp: SetAppState, isEditorOpen: boolean, setIsEditorOpen: React.Dispatch<React.SetStateAction<boolean>>) {
   const selectDialog = useCallback((dialog: Dialog) => {
     setApp({
       ...app,
@@ -70,7 +72,14 @@ function useActions(app: AppState, setApp: SetAppState) {
   }, [app])
 
   const addMessage = useCallback(async (input: string) => {
-    setIsEditorOpen(false);
+    // console.log('[addMessage]', app.isEditorOpen);
+    setApp(old => ({
+      ...old,
+      isEditorOpen: false,
+      // locked: true,
+    }));
+    // console.log('[addMessage:post]', app);
+
     let currentMessages: ChatMessage[] = [
       ...app.messages,
       {
@@ -105,42 +114,67 @@ function useActions(app: AppState, setApp: SetAppState) {
     const splitter = /[。|?|？|!|！]/
     const textSplitter = createTextSplitter('', splitter);
     const systemContent = SYSTEMS.find(s => s.id === app.system)?.content;
-    const answer = await runOpenAI({
-      apiKey: app.openaiApiKey!,
-      model: app.model!,
-      messages: [
-        ...currentMessages.map(t => ({ role: t.role, content: t.content })),
-        {
-          role: "user",
-          content: input,
-        },
-      ],
-      system: systemContent!,
-      onUpdate: (text, delta) => {
-        const lines = textSplitter.update(delta);
-        for (const line of lines) {
-          asyncQueue.enqueue(line);
-        }
-        currentMessages = [
-          ...currentMessages.slice(0, -1),
-          {
-            role: "assistant",
-            content: text,
-          },
-        ];
-        setApp(old => ({
-          ...old,
-          generating: true,
 
-          messages: currentMessages.slice(),
-        }));
-      }
-    });
+    let answer = '';
+    if (DEBUG_UI) {
+      answer = await runChatForDebug({
+        system: systemContent!,
+        messages: currentMessages.map(t => ({ role: t.role, content: t.content })),
+        onUpdate: (text, delta) => {
+          const lines = textSplitter.update(delta);
+          for (const line of lines) {
+            asyncQueue.enqueue(line);
+          }
+          currentMessages = [
+            ...currentMessages.slice(0, -1),
+            {
+              role: "assistant",
+              content: text,
+            },
+          ];
+          setApp(old => ({
+            ...old,
+            generating: true,
+            messages: currentMessages.slice(),
+          }));
+        }
+      });
+    } else {
+      answer = await runOpenAI({
+        apiKey: app.openaiApiKey!,
+        model: app.model!,
+        messages: [
+          ...currentMessages.map(t => ({ role: t.role, content: t.content })),
+          {
+            role: "user",
+            content: input,
+          },
+        ],
+        system: systemContent!,
+        onUpdate: (text, delta) => {
+          const lines = textSplitter.update(delta);
+          for (const line of lines) {
+            asyncQueue.enqueue(line);
+          }
+          currentMessages = [
+            ...currentMessages.slice(0, -1),
+            {
+              role: "assistant",
+              content: text,
+            },
+          ];
+          setApp(old => ({
+            ...old,
+            generating: true,
+            messages: currentMessages.slice(),
+          }));
+        }
+      });
+    }
     const remainingText = textSplitter.drain();
     for (const line of remainingText) {
       asyncQueue.enqueue(line);
     }
-    await asyncQueue.drain();
     currentMessages = [
       ...currentMessages.slice(0, -1),
       {
@@ -148,21 +182,27 @@ function useActions(app: AppState, setApp: SetAppState) {
         content: answer,
       },
     ];
+
     setApp(old => ({
       ...old,
       draft: '',
-      locked: false,
       generating: false,
       messages: currentMessages.slice(),
     }));
+    await asyncQueue.drain();
+    setApp(old => ({
+      ...old,
+      locked: false,
+    }));
+
     await updateMessages(app.ctxId!, currentMessages);
-  }, [app, setApp, app.isEditorOpen, app.locked, app.messages, setIsEditorOpen]);
+  }, [app]);
 
   const backToTop = useCallback(async () => {
     // if (app.locked) return;
-    if (app.messages.length === 0) {
+    if (app.messages.length === 0 && app.ctxId) {
       try {
-        await db.dialog.delete(app.ctxId!);
+        await db.dialog.delete(app.ctxId);
       } catch (e) {
         console.error(e);
       }
@@ -227,6 +267,10 @@ function useActions(app: AppState, setApp: SetAppState) {
     });
   }, [app]);
 
+  const toggleEditor = useCallback(() => {
+    setIsEditorOpen(old => !old);
+  }, [isEditorOpen,]);
+
   const setOpenAiApiKey = useCallback((openaiApiKey?: string) => {
     if (openaiApiKey) {
       setApp({
@@ -273,6 +317,7 @@ function useActions(app: AppState, setApp: SetAppState) {
   }, [app]);
 
   return {
+    setApp,
     setAnthropicApiKey,
     setOpenAiApiKey,
     backToTop,
@@ -281,61 +326,62 @@ function useActions(app: AppState, setApp: SetAppState) {
     onSpeechEnd,
     onSpeechStart,
     selectDialog,
+    toggleEditor,
     onChangeListening,
     onChangeDraft,
     selectModel,
-    setIsEditorOpen,
+    // setIsEditorOpen,
     selectSystem: selectSystemId,
     selectSpeaker: selectSpeakerId,
   }
 }
 
 
-function useKeyEvents(app: AppState, setAppState: SetAppState, actions: ReturnType<typeof useActions>) {
+function useKeyEvents(app: AppState, actions: ReturnType<typeof useActions>, isEditorOpen: boolean, setIsEditorOpen: React.Dispatch<React.SetStateAction<boolean>>) {
   useEffect(() => {
     const onKeyDown = async (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && app.isEditorOpen) {
-        setAppState(old => {
-          return {
-            ...old,
-            isEditorOpen: false,
-          }
-        });
+      if (e.key === 'Escape' && isEditorOpen) {
+        setIsEditorOpen(false);
         return;
       }
       // chat => open
-      if (e.key === 'Escape' && !app.isEditorOpen) {
+      if (e.key === 'Escape' && !isEditorOpen) {
         actions.backToTop();
         return;
       }
+      // open first dialog
       if (e.key === 'Enter' && app.ctxId == null) {
-        const dialog = await createNewDialog();
-        actions.selectDialog(dialog!);
+        const first = await db.dialog.orderBy('updatedAt').first();
+        if (first) {
+          actions.selectDialog(first);
+        } else {
+          const dialog = await createNewDialog();
+          actions.selectDialog(dialog!);
+        }
         return;
       }
 
-      if (e.key === 'Enter' && !app.isEditorOpen) {
-        setAppState(old => ({
-          ...old,
-          isEditorOpen: true,
-        }));
-        return;
-      }
-
-      // post message
-      if (app.isEditorOpen && e.key === 'Enter' && e.metaKey) {
-        console.log("Post message", app);
-        setAppState(old => ({
-          ...old,
-          isEditorOpen: false,
-          draft: '',
-        }));
+      // Post message
+      if (isEditorOpen && e.key === 'Enter' && e.metaKey) {
+        setIsEditorOpen(false);
         actions.addMessage(app.draft);
+        return;
+      }
+
+      // open editor
+      if (e.key === 'Enter' && !isEditorOpen && !app.locked && app.ctxId) {
+        console.log('open editor');
+        setIsEditorOpen(true);
+        // setAppState(old => ({
+        //   ...old,
+        //   isEditorOpen: true,
+        // }));
+        return;
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [app, setAppState, actions.addMessage, actions.backToTop]);
+  }, [app, actions.addMessage, actions.backToTop, isEditorOpen, setIsEditorOpen]);
 }

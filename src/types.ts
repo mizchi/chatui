@@ -17,7 +17,7 @@ export type AppState = {
   model: string | null,
   system: string | null,
   speaker: string | null,
-  isEditorOpen: boolean,
+  // isEditorOpen: boolean,
 };
 
 export interface Dialog {

@@ -11,6 +11,8 @@ export async function runChatAnthropicAI(options: {
 }) {
   const client = new AnthropicAI({
     apiKey: options.apiKey,
+    // baseURL: 'https://api.anthropic.com',
+    baseURL: '/anthropic-api',
   });
 
   let result = '';
@@ -58,6 +60,38 @@ export async function runOpenAI(opts: {
     }
   }
   console.log(result);
+  return result;
+}
+
+const DEBUG_MESSAGE_STREAM = [
+  'こんにち',
+  'は。デバッグ',
+  'モードです。ああああ。xxx'
+]
+export async function runChatForDebug(opts: {
+  system: string,
+  messages: { role: string; content: string }[],
+  onUpdate: (text: string, delta: string) => void,
+}) {
+  const messages = opts.messages;
+  const system = opts.system;
+  const onUpdate = opts.onUpdate;
+
+  let result = '';
+  for (const message of DEBUG_MESSAGE_STREAM) {
+    result += message;
+    onUpdate(result, message);
+  }
+  return result;
+  // for (const message of messages) {
+  //   if (message.role === 'system') {
+  //     result += system;
+  //     onUpdate(result, system);
+  //   } else {
+  //     result += message.content;
+  //     onUpdate(result, message.content);
+  //   }
+  // }
   return result;
 }
 

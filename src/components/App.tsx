@@ -11,8 +11,7 @@ import { SpeakerSelector } from "./SpeakerSelector";
 
 const isMac = navigator.userAgent.includes("Mac");
 export function App() {
-  const { app, actions } = useApp();
-
+  const { app, actions, isEditorOpen } = useApp();
   const canUseMic = app.micActive && !!app.ctxId && !app.loading && !app.locked && !app.generating;
   return (
     <>
@@ -25,11 +24,11 @@ export function App() {
         />
       }
       <Layout
-        isEditorOpen={app.isEditorOpen}
+        isEditorOpen={isEditorOpen}
         dialogOpened={!!app.ctxId}
         editorTools={
           <>
-            {app.isEditorOpen ? (
+            {isEditorOpen ? (
               <>
                 <button
                   type="button"
@@ -37,16 +36,16 @@ export function App() {
                 >
                   ✈
                   {
-                    isMac ? "(⌘-Enter)" : "(Ctrl-Enter)"
+                    isMac ? "[⌘-Enter]" : "[Ctrl-Enter]"
                   }
                 </button>
                 &nbsp;
                 <button
                   type="button"
                   className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-2 rounded"
-                  onClick={() => actions.setIsEditorOpen(!app.isEditorOpen)}
+                  onClick={actions.toggleEditor}
                 >
-                  ↓ (ESC)
+                  ↓ [ESC]
                 </button>
               </>
             ) : (
@@ -55,18 +54,13 @@ export function App() {
                 <button
                   type="button"
                   className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-2 rounded"
-                  onClick={() => actions.setIsEditorOpen(!app.isEditorOpen)}
+                  onClick={actions.toggleEditor}
                 >
-                  📝 (Enter)
+                  📝 [Enter]
                 </button>
                 {/* Make summary button */}
-                &nbsp;
-
               </>
             )}
-            {/* {
-
-            } */}
           </>
         }
         main={
@@ -77,18 +71,25 @@ export function App() {
             }
           </>
         }
-        sidebar={
+        editor={
+          isEditorOpen &&
           <Editor
-            disabled={app.generating || app.locked}
+            openAiApiKey={app.openaiApiKey}
             initialValue={app.draft}
             onChange={actions.onChangeDraft}
+            onSubmit={message => {
+              console.log('onSubmit', message);
+              // actions.setApp({ ...app, isEditorOpen: false })
+              actions.toggleEditor();
+              actions.addMessage(message);
+            }}
           />
         }
         tools={
           <>
             {/* back to top */}
             <button type='button' onClick={actions.backToTop} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-              Back (ESC)
+              ← [ESC]
             </button>
             &nbsp;
             {/* mic */}
