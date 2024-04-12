@@ -1,23 +1,16 @@
 import AnthropicAI from "@anthropic-ai/sdk";
 import { OpenAI } from "openai";
-import { ANTHROPIC_API_KEY, OPENAI_API_KEY, loadOrPromptOpenAIApiKey } from "./storage";
-
-export type ChatMessage = {
-  role: "user" | "assistant",
-  content: string,
-  generating?: boolean,
-}
 
 // TODO: Proxy
 export async function runChatAnthropicAI(options: {
   system: string,
   messages: AnthropicAI.Messages.MessageParam[],
   model: string,
+  apiKey: string,
   onUpdate: (text: string, delta: string) => void,
 }) {
-  const apiKey = await loadOrPromptOpenAIApiKey(ANTHROPIC_API_KEY);
   const client = new AnthropicAI({
-    apiKey,
+    apiKey: options.apiKey,
   });
 
   let result = '';
@@ -35,11 +28,14 @@ export async function runChatAnthropicAI(options: {
 }
 
 export async function runOpenAI(opts: {
-  model: string, system: string, messages: { role: string; content: string }[],
+  model: string,
+  system: string,
+  apiKey: string,
+  messages: { role: string; content: string }[],
   onUpdate: (text: string, delta: string) => void,
 }) {
   const openai = new OpenAI({
-    apiKey: await loadOrPromptOpenAIApiKey(OPENAI_API_KEY)!,
+    apiKey: opts.apiKey,
     dangerouslyAllowBrowser: true
   });
 
@@ -61,11 +57,11 @@ export async function runOpenAI(opts: {
       // console.log(result);
     }
   }
+  console.log(result);
   return result;
 }
 
-export async function transcript(wavBuffer: ArrayBuffer): Promise<{ text: string }> {
-  const apiKey = await loadOrPromptOpenAIApiKey(OPENAI_API_KEY);
+export async function transcript(wavBuffer: ArrayBuffer, options: { apiKey: string }): Promise<{ text: string }> {
   const blob = new Blob([wavBuffer], { type: 'audio/wav' });
 
   const transcriptionFormData = new FormData();
@@ -76,7 +72,7 @@ export async function transcript(wavBuffer: ArrayBuffer): Promise<{ text: string
   transcriptionFormData.set("file", blob);
   const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${options.apiKey}`,
     },
     method: "POST",
     body: transcriptionFormData,

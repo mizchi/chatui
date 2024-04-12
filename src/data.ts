@@ -3,7 +3,16 @@ type Model = {
   name: string,
 }
 
-export const SYSTEM_PROMPT = `
+export const SUMMARY_PROMPT = `
+今までの会話を要約してください。今までの会話を削除して、その要約を用います。
+要約時に会話のコンテキストを失わないようにしてください。
+`.trim();
+
+
+const VANILLA_PROMPT = `
+`;
+
+export const ZUNDA_PROMPT = `
 あなたはずんだもんです。
 
 ## 口調
@@ -40,11 +49,69 @@ export const SYSTEM_PROMPT = `
 このコンテキストに留意して、特に質問されない限り、口語で短く返してください。
 句読点「。」「?」「？」の度に、分割して音声合成を行います。長文にならないよう、リズムよく話すようにしてください。
 テキストは必ず「。」「？」「！」で終わらせてください。文の区切りをはっきりさせるために、"." で終わらせないでくさい。
-
-
 `.trim();
 
-export const SELECTABLE_MODELS: Model[] = [
+type System = {
+  id: string,
+  displayName: string,
+  content: string,
+};
+
+export const SYSTEMS: System[] = [
+  {
+    id: 'zundamon',
+    displayName: 'Zundamon',
+    content: ZUNDA_PROMPT,
+  },
+  {
+    id: 'no-prompt',
+    displayName: 'NoPrompt',
+    content: VANILLA_PROMPT,
+  }
+]
+
+export type VoicevoxSpeaker = {
+  id: string,
+  type: 'voicevox';
+  displayName: string;
+  speedScale: number;
+  pitchScale: number;
+}
+type VoiceOff = {
+  type: 'off';
+  displayName: string;
+  id: string;
+};
+
+type TextToSpeech = {
+  type: 'text-to-speech';
+  displayName: string;
+  id: string;
+}
+
+export type Speaker = VoicevoxSpeaker | VoiceOff | TextToSpeech;
+
+export const SPEAKERS: Speaker[] = [
+  {
+    displayName: 'Off',
+    id: 'off',
+    type: 'off',
+  },
+  {
+    displayName: 'ずんだもん',
+    id: 'zundamon',
+    type: 'voicevox',
+    speedScale: 1.5,
+    pitchScale: -0.1,
+  },
+  // {
+  //   displayName: 'NoPrompt',
+  //   id: 'no-prompt',
+  //   type: 'text-to-speech',
+  // }
+]
+
+export const MODELS: Model[] = [
   {
     service: 'openai',
     name: 'gpt-4',
@@ -53,17 +120,17 @@ export const SELECTABLE_MODELS: Model[] = [
     service: 'openai',
     name: 'gpt-4-turbo',
   },
-  {
-    service: 'anthropic',
-    name: 'claude-3-opus-20240229',
-  },
-  {
-    service: 'anthropic',
-    name: 'claude-3-sonnet-20240229',
-  },
-  {
-    service: 'anthropic',
-    name: 'claude-3-haiku-20240307',
-  },
+  // {
+  //   service: 'anthropic',
+  //   name: 'claude-3-opus-20240229',
+  // },
+  // {
+  //   service: 'anthropic',
+  //   name: 'claude-3-sonnet-20240229',
+  // },
+  // {
+  //   service: 'anthropic',
+  //   name: 'claude-3-haiku-20240307',
+  // },
 ];
 

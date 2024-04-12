@@ -1,30 +1,45 @@
-import { ChatMessage } from "./api";
+import { AppState } from "./types";
 
-export const OPENAI_API_KEY = "OPENAI_API_KEY";
-export const ANTHROPIC_API_KEY = "ANTHROPIC_API_KEY";
-
-export async function saveHistory(newHistory: ChatMessage[]) {
-  localStorage.setItem('history', JSON.stringify(newHistory));
+export const defaultAppState: AppState = {
+  messages: [],
+  locked: false,
+  openaiApiKey: null,
+  anthropicApiKey: null,
+  listening: false,
+  ctxId: null,
+  micActive: false,
+  loading: false,
+  generating: false,
+  model: 'gpt-4-turbo',
+  system: 'zundamon',
+  speaker: 'zundamon',
+  isEditorOpen: false,
+  draft: '',
 }
 
-export async function loadHistory() {
-  const history = localStorage.getItem('history');
-  if (!history) {
-    return [];
-  }
-  return JSON.parse(history) as ChatMessage[];
+const alwaysResetValues: Partial<AppState> = {
+  locked: false,
+  listening: false,
+  loading: false,
+  generating: false,
+  isEditorOpen: false,
 }
 
-export async function loadOrPromptOpenAIApiKey(key: string) {
-  const apiKey = localStorage.getItem(key);
-  if (apiKey) {
-    return apiKey;
+export async function loadAppState(): Promise<AppState> {
+  const json = localStorage.getItem('appState');
+  if (json) {
+    return {
+      ...defaultAppState,
+      ...JSON.parse(json),
+      ...alwaysResetValues,
+    }
   }
-  const newApiKey = prompt(`Enter ${key}`);
-  if (newApiKey) {
-    localStorage.setItem(key, newApiKey);
-    return newApiKey;
-  }
-  return undefined;
+  return {
+    ...defaultAppState,
+  };
+}
+
+export async function saveAppState(appState: AppState): Promise<void> {
+  localStorage.setItem('appState', JSON.stringify(appState));
 }
 
