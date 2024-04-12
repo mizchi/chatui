@@ -4,3 +4,4 @@ public/*.onnx
 node_modules
 types
 dist
+.wrangler
