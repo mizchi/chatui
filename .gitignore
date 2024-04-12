@@ -3,3 +3,4 @@ public/*.min.js
 public/*.onnx
 node_modules
 types
+dist

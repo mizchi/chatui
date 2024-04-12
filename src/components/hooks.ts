@@ -2,11 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { runAnthropicAI, runChatForDebug, runOpenAI, transcript } from "../api";
 import { defaultAppState, loadAppState, saveAppState } from "../storage";
 import { createAsyncQueue, createTextSplitter } from "../utils";
-import { MODELS, SPEAKERS, SYSTEMS } from "../data";
+// import { MODELS, SPEAKERS, SYSTEMS } from "../data/data";
 import { utils } from "@ricky0123/vad-web";
 import { Dialog, createNewDialog, db, updateMessages } from "../db";
 import { playClick as playClickSound, voicevox } from "../audio";
 import { AppState, ChatMessage } from "../types";
+import { SPEAKERS } from "../data/speakers";
+import { SYSTEMS } from "../data/systems";
+import { MODELS } from "../data/models";
 
 type SetAppState = React.Dispatch<React.SetStateAction<AppState>>;
 

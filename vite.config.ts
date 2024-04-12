@@ -1,5 +1,7 @@
 import monacoEditorPlugin from 'vite-plugin-monaco-editor';
 import { defineConfig } from "vite";
+import { VitePWA } from 'vite-plugin-pwa'
+
 const prefix = `monaco-editor/esm/vs`;
 
 export default defineConfig({
@@ -13,6 +15,7 @@ export default defineConfig({
     ]
   },
   plugins: [
+    VitePWA({ registerType: 'autoUpdate' }),
     monacoEditorPlugin({
 
     }),

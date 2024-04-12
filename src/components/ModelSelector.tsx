@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MODELS } from "../data";
+import { MODELS } from "../data/models";
 export function ModelSelector(props: { model: string, onSelectModel: (model: string) => void }) {
   const [selectedModel, setSelectedModel] = useState(props.model);
   return (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SPEAKERS } from "../data";
+import { SPEAKERS } from "../data/speakers";
 
 export function SpeakerSelector(props: { speaker: string, onSelectSpeaker: (model: string) => void }) {
   const [selectedSpeaker, setSelectedSpeaker] = useState(props.speaker);

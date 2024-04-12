@@ -1,3 +1,4 @@
+
 export type ChatMessage = {
   role: "user" | "assistant",
   content: string,
@@ -53,3 +54,17 @@ type TextToSpeech = {
 }
 
 export type Speaker = VoicevoxSpeaker | VoiceOff | TextToSpeech;
+
+export type System = {
+  id: string,
+  displayName: string,
+  content: string,
+};
+
+
+export type Model = {
+  service: 'openai' | 'anthropic',
+  displayName: string,
+  id: string,
+}
+

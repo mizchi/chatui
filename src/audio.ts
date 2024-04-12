@@ -1,4 +1,4 @@
-import { VoicevoxSpeaker } from "./data";
+import { VoicevoxSpeaker } from "./data/data";
 
 let audio: HTMLAudioElement | null = null;
 export async function playClick() {

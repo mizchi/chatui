@@ -4,11 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "pnpm build && vite serve",
+    "build": "vite build",
+    "dev": "vite",
+    "test": "vitest --run"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "mizchi",
+  "license": "MIT",
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.20.2",
     "@types/react": "^18.2.75",
@@ -35,8 +38,11 @@
     "unified": "^11.0.4",
     "vite": "^5.2.8",
     "vite-plugin-monaco-editor": "^1.1.0",
+    "vite-plugin-pwa": "^0.19.8",
     "vite-plugin-static-copy": "^1.0.2",
-    "vitest": "^1.4.0"
+    "vitest": "^1.4.0",
+    "wrangler": "^3.50.0",
+    "zx": "^8.0.1"
   },
   "dependencies": {
     "@ricky0123/vad-react": "^0.0.23",

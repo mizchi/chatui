@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SYSTEMS } from "../data";
+import { SYSTEMS } from "../data/systems";
 export function SystemSelector(props: { system: string, onSelectSystem: (model: string) => void }) {
   const [selectedSystem, setSelectedSystem] = useState(props.system);
   return (
